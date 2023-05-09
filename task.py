@@ -1,6 +1,23 @@
 import dataclasses
 import datetime
 
+def all_or_nothing(value: any) -> int:
+    """Either there is something or there isn't"""
+    return 1 if value else 0
+
+def length_reduction(value: str | list) -> int:
+    """The longer the string or list, the lower the score"""
+    return 1 / len(value)
+
+
+
+@dataclasses
+class BaseScore:
+    base_score: int
+    value: str | int | datetime
+    modifier: function
+
+
 @dataclasses.dataclass
 class Score:
     """
@@ -34,7 +51,6 @@ class Score:
     effort: int # modifies the score based on the effort to complete the task
         TODO: How to calculate this?
     """
-    total: int # sum of all scores
     description: int # modifies the score based on if a description is present
     due_date: int # modifies the score based on if the task exists
     overdue: int # modifies the score based on if the task is overdue
@@ -46,21 +62,71 @@ class Score:
     stakeholders: int # modifies the score based on the number of stakeholders
     effort: int # modifies the score based on the effort to complete the task
 
+    @property
+    def score(self):
+        """
+        Use an asymptotic function to calculate the score
+
+        """
+        return self.total / (1 + self.total)
+
 
 @dataclasses.dataclass
 class Task:
-    id: primary_key,
-    score: Score
+    """
+    This is the base object. All Tasks and Projects are Tasks
+
+    Parameters:
+        "title": "Sarah Presenting at San Diego Python",
+        "max_score" : 0.5,
+        "score" : 0.1,
+        "description" : "Sarah will be presenting at San Diego Python on 2023-06-10 on Jupyter Notebooks, VS Code and Data Wrangler",
+        "depends_on": None,
+        "due_date" : datetime.datetime(2023, 6, 10),
+        "overdue" : False,
+        "subtasks" : ["<2, title: 'Sarah needs to create a presentation', score: 0.2>", '<3, title: "Sarah needs to practice the presentation", score: 0.3>']'],
+        "parent_task" : None,
+        "num_completed_subtasks" : 0,
+        "deferred" : False,
+        "taggings" : ['presenting', 'python', 'cloud-advocacy'],
+        "stakeholders" : ['Sarah', 'David'] ,
+        "effort": a manual modifier that can be set by the user
+    """
+
+    id: int
     description: str
     due_date: datetime.datetime
     overdue: bool
     subtasks:  list["Task"]
-    max_score: int 
+    max_score: float
+    depends_on: list["Task"]
     completed: bool
     parent: "Task"
     root: "Task"
+    effort: float
 
-      "id": 1,
+    @property
+    def overdue(self) -> bool:
+        return datetime.datetime.now() > self.due_date
+
+    def __str__(self):
+        return f"{self.id}: {self.title}, score: {self.score}"
+
+
+    @property
+    def score(self) -> Score:
+        return Score(
+            description=0,
+            due_date=0,
+            overdue=0,
+            subtasks=0,
+            num_completed_subtasks=0,
+            max_score=1,
+            deferred=0,
+            taggings=0,
+            stakeholders=0,
+        )
+
             "title": "Sarah Presenting at San Diego Python",
             "max_score" : 0.5,
             "score" : 0.1,
